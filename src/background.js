@@ -8,10 +8,6 @@ async function fetchBlockedSites() {
 
     // now blockedSites contains all of the blocked sites
     const blockedSites = arrayOfBlockedSites.docs[0].data().sites;
-
-    for (const i of blockedSites) {
-        console.log(i);
-    }
     
     const formattedURLArray = convertToReusableURL(blockedSites);
     setupBlocking(formattedURLArray);
@@ -99,22 +95,40 @@ function setupBlocking(urlPatterns) {
   });
 }
 
+function disableBlocking() {
+  chrome.declarativeNetRequest.getDynamicRules().then(existingRules => {
+    const ruleIdsToRemove = existingRules.map(rule => rule.id); // Grab all rule IDs you've added
+
+    chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: ruleIdsToRemove
+    }).then(() => {
+      console.log("🛑 All blocking rules disabled");
+    }).catch(err => {
+      console.error("❌ Failed to remove blocking rules:", err);
+    });
+  });
+}
+
+
 
 
 //Trigger fetchBlockedSites ONLY inside event handlers:
-chrome.runtime.onInstalled.addListener(() => {
-  console.log("🔧 Extension installed");
-  fetchBlockedSites();
-});
+// chrome.runtime.onInstalled.addListener(() => {
+//   console.log("🔧 Extension installed");
+//   fetchBlockedSites();
+// });
 
-chrome.runtime.onStartup.addListener(() => {
-  console.log("🔁 Chrome restarted - refetching blocklist");
-  fetchBlockedSites();
-});
+// chrome.runtime.onStartup.addListener(() => {
+//   console.log("🔁 Chrome restarted - refetching blocklist");
+//   fetchBlockedSites();
+// });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message === "refreshBlocklist") {
     console.log("🔄 Popup requested to re-fetch blocklist");
     fetchBlockedSites();
+  } else if (message === "disableBlocklist") {
+    console.log("🛑 Popup requested to disable blocking");
+    disableBlocking();
   }
 });

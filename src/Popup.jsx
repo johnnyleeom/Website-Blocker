@@ -6,7 +6,6 @@ import {
 } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
 import Dashboard from './Dashboard';
-import './App.css'
 
 function Popup() {
   const [email, setEmail] = useState('');
