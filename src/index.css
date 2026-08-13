@@ -8,73 +8,63 @@
   text-rendering: optimizeLegibility;
 }
 
-body {
+html, body, #root {
   margin: 0;
-  min-width: 400px;
-  min-height: 560px;
+  width: 360px;
+  min-width: 360px;
   background: #f2f2f2;
 }
 
 button, input { font: inherit; }
 button { cursor: pointer; }
 
-#root {
-  width: 400px;
-  min-height: 560px;
-}
-
 .dashboard-shell,
 .login-shell {
-  width: 400px;
-  min-height: 560px;
-  padding: 28px 24px;
+  width: 360px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   text-align: center;
 }
 
 .app-header {
   width: 100%;
+  margin: 0 0 14px;
   text-align: center;
-  margin: 0 0 24px;
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 27px;
+  font-size: 22px;
   font-weight: 700;
 }
 
 .app-header p {
-  margin: 6px 0 0;
-  font-size: 13px;
+  margin: 4px 0 0;
+  font-size: 11px;
   color: #777;
 }
 
 .panel {
   width: 100%;
-  max-width: 352px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 20px;
+  padding: 14px;
   background: #fff;
   border: 1px solid #d9d9d9;
-  border-radius: 10px;
+  border-radius: 8px;
   text-align: center;
 }
 
 .panel h2 {
-  margin: 0 0 6px;
-  font-size: 18px;
+  margin: 0 0 4px;
+  font-size: 16px;
 }
 
 .helper-text {
-  margin: 0 0 18px;
+  margin: 0 0 12px;
   color: #777;
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 11px;
+  line-height: 1.35;
   text-align: center;
 }
 
@@ -83,13 +73,14 @@ button { cursor: pointer; }
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  padding: 11px;
-  margin-bottom: 18px;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 12px;
   border: 1px solid #ccc;
-  border-radius: 7px;
+  border-radius: 6px;
   background: #f7f7f7;
   color: #555;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -100,8 +91,8 @@ button { cursor: pointer; }
 }
 
 .toggle-track {
-  width: 34px;
-  height: 19px;
+  width: 30px;
+  height: 17px;
   padding: 2px;
   display: flex;
   border-radius: 10px;
@@ -109,32 +100,32 @@ button { cursor: pointer; }
 }
 
 .toggle-knob {
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: #fff;
   transition: transform .15s ease;
 }
 
 .block-toggle.on .toggle-track { background: #4b8d59; }
-.block-toggle.on .toggle-knob { transform: translateX(15px); }
+.block-toggle.on .toggle-knob { transform: translateX(13px); }
 
 .site-input-row {
   width: 100%;
   display: flex;
   justify-content: center;
-  gap: 7px;
+  gap: 6px;
 }
 
 .site-input-row input,
 .login-panel input {
   min-width: 0;
-  padding: 10px;
+  padding: 8px 9px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 5px;
   outline: none;
   background: #fff;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .site-input-row input { flex: 1; }
@@ -144,29 +135,29 @@ button { cursor: pointer; }
 .site-input-row > button,
 .main-button {
   border: 1px solid #333;
-  border-radius: 6px;
+  border-radius: 5px;
   background: #333;
   color: #fff;
+  font-size: 11px;
   font-weight: 600;
 }
 
-.site-input-row > button { padding: 0 14px; }
+.site-input-row > button { padding: 0 12px; }
 
 .site-list {
   width: 100%;
-  margin-top: 14px;
-  max-height: 135px;
+  margin-top: 9px;
+  max-height: 82px;
   overflow-y: auto;
 }
 
 .site-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 9px 0;
+  gap: 6px;
+  padding: 7px 0;
   border-bottom: 1px solid #eee;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .site-row span {
@@ -181,26 +172,25 @@ button { cursor: pointer; }
   border: 0;
   background: transparent;
   color: #a04444;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .empty-state {
-  margin: 10px 0 0;
+  margin: 7px 0 0;
   color: #999;
-  font-size: 12px;
+  font-size: 10px;
   text-align: center;
 }
 
 .divider {
   width: 100%;
-  max-width: 352px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin: 18px auto;
+  gap: 8px;
+  margin: 10px 0;
   color: #999;
-  font-size: 11px;
+  font-size: 10px;
   text-align: center;
 }
 
@@ -213,19 +203,19 @@ button { cursor: pointer; }
 }
 
 .timer-tabs {
-  width: 150px;
+  width: 126px;
   display: flex;
-  margin: 16px auto;
+  margin: 10px auto;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 5px;
   overflow: hidden;
 }
 
 .timer-tabs span {
   flex: 1;
-  padding: 6px;
+  padding: 5px;
   color: #888;
-  font-size: 11px;
+  font-size: 10px;
   text-align: center;
 }
 
@@ -236,24 +226,34 @@ button { cursor: pointer; }
 }
 
 .timer-display {
-  margin: 12px 0 8px;
-  font-size: 52px;
+  margin: 8px 0 5px;
+  font-size: 42px;
   line-height: 1;
   font-weight: 700;
-  letter-spacing: -2px;
+  letter-spacing: -1.5px;
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
-.timer-help { margin-bottom: 16px; text-align: center; }
-.timer-actions { display: flex; justify-content: center; align-items: center; gap: 8px; }
-.timer-actions button { padding: 9px 22px; }
-.main-button { padding: 10px 20px; }
-.plain-button { border: 1px solid #bbb; border-radius: 6px; background: #fff; color: #555; }
+.timer-help {
+  margin: 0 0 10px;
+  text-align: center;
+}
 
-.login-shell { justify-content: center; }
-.login-heading { width: 100%; margin-bottom: 20px; text-align: center; }
-.login-panel { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.timer-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-actions button { padding: 7px 18px; font-size: 11px; }
+.main-button { padding: 8px 18px; }
+.plain-button { border: 1px solid #bbb; border-radius: 5px; background: #fff; color: #555; }
+
+.login-shell { justify-content: center; min-height: 430px; }
+.login-heading { width: 100%; margin-bottom: 14px; text-align: center; }
+.login-panel { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .login-panel input { width: 100%; }
-.login-panel h2 { margin-bottom: 6px; text-align: center; }
-.login-status { margin: 3px 0 0; color: #a04444; font-size: 11px; text-align: center; }
+.login-panel h2 { margin-bottom: 4px; text-align: center; }
+.login-status { margin: 2px 0 0; color: #a04444; font-size: 10px; text-align: center; }
