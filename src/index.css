@@ -11,11 +11,17 @@
 body {
   margin: 0;
   min-width: 400px;
+  min-height: 560px;
   background: #f2f2f2;
 }
 
 button, input { font: inherit; }
 button { cursor: pointer; }
+
+#root {
+  width: 400px;
+  min-height: 560px;
+}
 
 .dashboard-shell,
 .login-shell {
@@ -25,12 +31,14 @@ button { cursor: pointer; }
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .app-header {
   width: 100%;
   text-align: center;
-  margin: 4px 0 24px;
+  margin: 0 0 24px;
 }
 
 .app-header h1 {
@@ -47,6 +55,9 @@ button { cursor: pointer; }
 
 .panel {
   width: 100%;
+  max-width: 352px;
+  margin-left: auto;
+  margin-right: auto;
   padding: 20px;
   background: #fff;
   border: 1px solid #d9d9d9;
@@ -64,6 +75,7 @@ button { cursor: pointer; }
   color: #777;
   font-size: 12px;
   line-height: 1.45;
+  text-align: center;
 }
 
 .block-toggle {
@@ -108,7 +120,9 @@ button { cursor: pointer; }
 .block-toggle.on .toggle-knob { transform: translateX(15px); }
 
 .site-input-row {
+  width: 100%;
   display: flex;
+  justify-content: center;
   gap: 7px;
 }
 
@@ -139,6 +153,7 @@ button { cursor: pointer; }
 .site-input-row > button { padding: 0 14px; }
 
 .site-list {
+  width: 100%;
   margin-top: 14px;
   max-height: 135px;
   overflow-y: auto;
@@ -147,10 +162,10 @@ button { cursor: pointer; }
 .site-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 9px 0;
   border-bottom: 1px solid #eee;
-  text-align: left;
   font-size: 12px;
 }
 
@@ -159,6 +174,7 @@ button { cursor: pointer; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: center;
 }
 
 .site-row button {
@@ -168,16 +184,24 @@ button { cursor: pointer; }
   font-size: 11px;
 }
 
-.empty-state { margin: 10px 0 0; color: #999; font-size: 12px; }
+.empty-state {
+  margin: 10px 0 0;
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+}
 
 .divider {
   width: 100%;
+  max-width: 352px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  margin: 18px 0;
+  margin: 18px auto;
   color: #999;
   font-size: 11px;
+  text-align: center;
 }
 
 .divider::before,
@@ -202,6 +226,7 @@ button { cursor: pointer; }
   padding: 6px;
   color: #888;
   font-size: 11px;
+  text-align: center;
 }
 
 .timer-tabs .selected {
@@ -217,16 +242,18 @@ button { cursor: pointer; }
   font-weight: 700;
   letter-spacing: -2px;
   font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
-.timer-help { margin-bottom: 16px; }
-.timer-actions { display: flex; justify-content: center; gap: 8px; }
+.timer-help { margin-bottom: 16px; text-align: center; }
+.timer-actions { display: flex; justify-content: center; align-items: center; gap: 8px; }
 .timer-actions button { padding: 9px 22px; }
 .main-button { padding: 10px 20px; }
 .plain-button { border: 1px solid #bbb; border-radius: 6px; background: #fff; color: #555; }
 
 .login-shell { justify-content: center; }
-.login-heading { margin-bottom: 20px; }
-.login-panel { display: flex; flex-direction: column; gap: 10px; }
-.login-panel h2 { margin-bottom: 6px; }
-.login-status { margin: 3px 0 0; color: #a04444; font-size: 11px; }
+.login-heading { width: 100%; margin-bottom: 20px; text-align: center; }
+.login-panel { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.login-panel input { width: 100%; }
+.login-panel h2 { margin-bottom: 6px; text-align: center; }
+.login-status { margin: 3px 0 0; color: #a04444; font-size: 11px; text-align: center; }
