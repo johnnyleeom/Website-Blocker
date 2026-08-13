@@ -29,27 +29,20 @@ function Popup() {
   };
 
   useEffect(() => onAuthStateChanged(auth, setUser), []);
-
   if (user) return <Dashboard />;
 
   return (
     <main className="login-shell">
-      <div className="login-brand">
-        <img className="login-logo" src="/specLogo.png" alt="FocusShield logo" />
+      <header className="app-header login-heading">
         <h1>FocusShield</h1>
-        <p>Protect your focus. Finish what matters.</p>
-      </div>
-
-      <section className="login-card">
-        <div>
-          <span className="eyebrow">WELCOME</span>
-          <h2>Sign in to focus</h2>
-          <p>Your block list stays synced to your account.</p>
-        </div>
+        <p>Less distraction. More focus.</p>
+      </header>
+      <section className="panel login-panel">
+        <h2>Sign in</h2>
         <input type="email" placeholder="Email" value={email} onChange={(event) => setEmail(event.target.value)} />
         <input type="password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} onKeyDown={(event) => event.key === "Enter" && handleLogin()} />
-        <button onClick={handleLogin}>Continue</button>
-        {status && <div className="login-status">{status}</div>}
+        <button className="main-button" onClick={handleLogin}>Continue</button>
+        {status && <p className="login-status">{status}</p>}
       </section>
     </main>
   );
