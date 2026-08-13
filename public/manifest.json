@@ -1,24 +1,37 @@
 {
-  "manifest_version": 3,              
-  "name": "FocusShield",             
-  "version": "1.0",                  
-  "description": "...",              
-  "permissions": [ "declarativeNetRequest",
+  "manifest_version": 3,
+  "name": "FocusShield",
+  "version": "1.1.0",
+  "description": "Block distracting websites while you focus with a built-in Pomodoro timer.",
+  "permissions": [
+    "alarms",
+    "declarativeNetRequest",
     "declarativeNetRequestWithHostAccess",
-    "storage"],         
-  "host_permissions": ["<all_urls>"], 
+    "storage"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "icons": {
+    "16": "specLogo.png",
+    "32": "specLogo.png",
+    "48": "specLogo.png",
+    "128": "specLogo.png"
+  },
   "action": {
-    "default_popup": "popup.html",   
+    "default_popup": "popup.html",
+    "default_title": "FocusShield",
     "default_icon": {
-      "128": "specLogo.png"           
+      "16": "specLogo.png",
+      "32": "specLogo.png",
+      "48": "specLogo.png",
+      "128": "specLogo.png"
     }
   },
   "web_accessible_resources": [
-  {
-    "resources": ["block.html"],
-    "matches": ["<all_urls>"]
-  }
-],
+    {
+      "resources": ["block.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "background": {
     "service_worker": "background.js",
     "type": "module"
