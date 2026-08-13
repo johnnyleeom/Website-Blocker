@@ -11,19 +11,19 @@ FocusShield is a Chrome extension that helps you stay focused by blocking distra
 ### Dashboard
 
 <p align="center">
-  <img src="screenshots/dashboard.png" alt="FocusShield dashboard" width="420" />
+  <img src="public/screenshots/dashboard.png" alt="FocusShield dashboard" width="420" />
 </p>
 
 ### Sign in
 
 <p align="center">
-  <img src="screenshots/logInPage.png" alt="FocusShield sign in page" width="420" />
+  <img src="public/screenshots/logInPage.png" alt="FocusShield sign in page" width="420" />
 </p>
 
 ### Blocked website page
 
 <p align="center">
-  <img src="screenshots/blockedURL.png" alt="FocusShield blocked website page" width="800" />
+  <img src="public/screenshots/blockedURL.png" alt="FocusShield blocked website page" width="800" />
 </p>
 
 ## Features
@@ -42,7 +42,7 @@ FocusShield is currently distributed as an unpacked Chrome extension.
 
 ### 1. Download FocusShield
 
-Download the latest FocusShield beta ZIP provided in the GitHub Releases section and unzip it on your computer.
+Download the FocusShield beta ZIP and unzip it on your computer.
 
 ### 2. Open Chrome Extensions
 
@@ -85,21 +85,6 @@ FocusShield is now ready to use.
 5. When the focus session finishes, blocking is disabled and FocusShield switches to a 5-minute break.
 
 Manual blocking and timer-based blocking work independently. If manual blocking is enabled, your websites remain blocked even when the focus timer is paused or reset.
-
-## Development
-
-FocusShield is built with React, Vite, Firebase, and Chrome Extension APIs including `declarativeNetRequest`, `storage`, and `alarms`.
-
-To run the project locally:
-
-```bash
-git clone https://github.com/johnnyleeom/Website-Blocker.git
-cd Website-Blocker
-npm install
-npm run build
-```
-
-Then load the generated `dist` directory through `chrome://extensions` using **Load unpacked**.
 
 ## Beta Feedback
 
