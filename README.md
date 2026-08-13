@@ -1,13 +1,115 @@
-# React + Vite
+# FocusShield
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Less distraction. More focus.**
 
-Currently, two official plugins are available:
+FocusShield is a Chrome extension that helps you stay focused by blocking distracting websites. You can turn blocking on manually whenever you need it, or use the built-in focus timer to automatically block your selected sites during a focus session.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+> **Beta:** FocusShield is currently in beta testing and is not yet published on the Chrome Web Store.
 
-## Expanding the ESLint configuration
+## Preview
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-# Focusshield
+### Dashboard
+
+<p align="center">
+  <img src="screenshots/dashboard.png" alt="FocusShield dashboard" width="420" />
+</p>
+
+### Sign in
+
+<p align="center">
+  <img src="screenshots/logInPage.png" alt="FocusShield sign in page" width="420" />
+</p>
+
+### Blocked website page
+
+<p align="center">
+  <img src="screenshots/blockedURL.png" alt="FocusShield blocked website page" width="800" />
+</p>
+
+## Features
+
+- Add and remove websites from your personal block list
+- Turn website blocking on or off manually
+- Start a 25-minute focus session that automatically enables blocking
+- Pause a focus session to temporarily restore access
+- 5-minute break sessions with websites unblocked
+- Timer and blocking state persist when the extension popup is closed
+- Account-based block lists using Firebase
+
+## Install the Beta
+
+FocusShield is currently distributed as an unpacked Chrome extension.
+
+### 1. Download FocusShield
+
+Download the latest FocusShield beta ZIP provided in the GitHub Releases section and unzip it on your computer.
+
+### 2. Open Chrome Extensions
+
+In Google Chrome, enter the following in the address bar:
+
+```text
+chrome://extensions
+```
+
+### 3. Enable Developer Mode
+
+Turn on **Developer mode** using the toggle in the top-right corner of the Extensions page.
+
+### 4. Load FocusShield
+
+Click **Load unpacked** and select the unzipped FocusShield `dist` folder.
+
+### 5. Pin the Extension
+
+Click the Extensions icon in the Chrome toolbar and pin **FocusShield** for easy access.
+
+FocusShield is now ready to use.
+
+## Using FocusShield
+
+### Manual Website Blocking
+
+1. Sign in to FocusShield.
+2. Add a website such as `youtube.com` to your block list.
+3. Turn **Blocking** on.
+4. Attempts to visit a blocked website will be redirected to the FocusShield blocked page.
+5. Turn blocking off whenever you want normal access again.
+
+### Focus Timer
+
+1. Add the websites you want to block.
+2. Press **Start** under Focus Timer.
+3. Your block list is automatically activated for the 25-minute focus session.
+4. Pausing the timer temporarily disables timer-based blocking.
+5. When the focus session finishes, blocking is disabled and FocusShield switches to a 5-minute break.
+
+Manual blocking and timer-based blocking work independently. If manual blocking is enabled, your websites remain blocked even when the focus timer is paused or reset.
+
+## Development
+
+FocusShield is built with React, Vite, Firebase, and Chrome Extension APIs including `declarativeNetRequest`, `storage`, and `alarms`.
+
+To run the project locally:
+
+```bash
+git clone https://github.com/johnnyleeom/Website-Blocker.git
+cd Website-Blocker
+npm install
+npm run build
+```
+
+Then load the generated `dist` directory through `chrome://extensions` using **Load unpacked**.
+
+## Beta Feedback
+
+FocusShield is actively being tested. If you encounter a bug or unexpected behavior, please open a GitHub issue with:
+
+- What you were trying to do
+- What happened
+- What you expected to happen
+- Your Chrome version, if relevant
+
+## Status
+
+FocusShield is currently a beta project. Features and behavior may change as testing continues.
