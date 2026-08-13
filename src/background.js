@@ -1,134 +1,113 @@
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "./firebase.js";
 
+const SESSION_ALARM = "focusShieldSessionEnd";
+
 async function fetchBlockedSites() {
-    // getDocs returns special FireBase QuerySnapShot (like an array) of 
-    // blocked sites from 'blockedSites'
-    const arrayOfBlockedSites = await getDocs(collection(db, 'blockedSites'));
-
-    // now blockedSites contains all of the blocked sites
-    const blockedSites = arrayOfBlockedSites.docs[0].data().sites;
-    
-    const formattedURLArray = convertToReusableURL(blockedSites);
-    setupBlocking(formattedURLArray);
+  try {
+    const snapshot = await getDocs(collection(db, "blockedSites"));
+    const blockedSites = snapshot.docs[0]?.data()?.sites || [];
+    setupBlocking(convertToReusableURL(blockedSites));
+  } catch (error) {
+    console.error("Failed to fetch blocked sites:", error);
+  }
 }
 
-// converts messy url to resuable URL: ex. *://*.youtube.com/*`
 function convertToReusableURL(urlList) {
-    let toReturn = []
-    for (const oldURL of urlList) {
-        try {
-            // new URL can extract just the host name 
-            const {hostname} = new URL(oldURL);
-            const newURL = `*://*.${hostname}/*`;
-            toReturn.push(newURL);
-            console.log(newURL);
-        } 
-        catch(err) {
-            console.log('this url is not valid:', oldURL);
-        }
+  const formatted = [];
+
+  for (const oldURL of urlList) {
+    try {
+      const normalized = /^https?:\/\//i.test(oldURL) ? oldURL : `https://${oldURL}`;
+      const { hostname } = new URL(normalized);
+      formatted.push(`*://*.${hostname.replace(/^www\./, "")}/*`);
+    } catch (error) {
+      console.warn("Invalid blocked URL:", oldURL, error);
     }
-    return toReturn;
+  }
+
+  return formatted;
 }
 
-// function setupBlocking(urlPatterns) {
-//   const rules = urlPatterns.map((pattern, index) => {
-//     const hostname = pattern.replace("*://*.", "").replace("/*", "");
-//     return {
-//       id: 1000 + index, // 🔐 unique ID for each rule
-//       priority: 1,
-//       action: {
-//         type: "redirect",
-//         redirect: { extensionPath: "/block.html" }
-//       },
-//       condition: {
-//         urlFilter: hostname, // only match the base domain
-//         resourceTypes: ["main_frame"]
-//       }
-//     };
-//   });
+async function setupBlocking(urlPatterns) {
+  const rules = urlPatterns.map((pattern, index) => ({
+    id: 1000 + index,
+    priority: 1,
+    action: {
+      type: "redirect",
+      redirect: { extensionPath: "/block.html" }
+    },
+    condition: {
+      urlFilter: pattern.replace("*://*.", "").replace("/*", ""),
+      resourceTypes: ["main_frame"]
+    }
+  }));
 
-//   const ruleIds = rules.map(rule => rule.id);
-
-//   chrome.declarativeNetRequest.updateDynamicRules({
-//     removeRuleIds: ruleIds,
-//     addRules: rules
-//   }).then(() => {
-//     console.log("✅ Blocking rules set using DNR:", rules);
-//   }).catch(err => {
-//     console.error("❌ Failed to set rules:", err);
-//   });
-// }
-
-// MOST IMPORTANT FUNCTION::::::::::: MY ENTIRE PROGRAM IS ON THIS LINE
-function setupBlocking(urlPatterns) {
-  const rules = urlPatterns.map((pattern, index) => {
-    const hostname = pattern.replace("*://*.", "").replace("/*", "");
-    return {
-      id: 1000 + index, // 🔐 unique ID for each rule
-      priority: 1,
-      action: {
-        type: "redirect",
-        redirect: { extensionPath: "/block.html" }
-      },
-      condition: {
-        urlFilter: hostname,
-        resourceTypes: ["main_frame"]
-      }
-    };
-  });
-
-  const newRuleIds = rules.map(rule => rule.id);
-
-  // 🔄 Remove all existing rules before adding new ones
-  chrome.declarativeNetRequest.getDynamicRules().then(existingRules => {
-    const existingIds = existingRules.map(r => r.id);
-
-    chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: existingIds, // 🧹 clear everything
-      addRules: rules              // ➕ add fresh ones
-    }).then(() => {
-      console.log("✅ Blocking rules refreshed:", rules);
-    }).catch(err => {
-      console.error("❌ Failed to update rules:", err);
-    });
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: existingRules.map((rule) => rule.id),
+    addRules: rules
   });
 }
 
-function disableBlocking() {
-  chrome.declarativeNetRequest.getDynamicRules().then(existingRules => {
-    const ruleIdsToRemove = existingRules.map(rule => rule.id); // Grab all rule IDs you've added
+async function disableBlocking() {
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+  if (existingRules.length === 0) return;
 
-    chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: ruleIdsToRemove
-    }).then(() => {
-      console.log("🛑 All blocking rules disabled");
-    }).catch(err => {
-      console.error("❌ Failed to remove blocking rules:", err);
-    });
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: existingRules.map((rule) => rule.id)
   });
 }
 
+async function scheduleSessionEnd(endTime) {
+  await chrome.alarms.clear(SESSION_ALARM);
+  if (endTime) {
+    chrome.alarms.create(SESSION_ALARM, { when: endTime });
+  }
+}
 
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name !== SESSION_ALARM) return;
 
+  const { pomodoroState } = await chrome.storage.local.get("pomodoroState");
+  if (!pomodoroState?.isRunning) return;
 
-//Trigger fetchBlockedSites ONLY inside event handlers:
-// chrome.runtime.onInstalled.addListener(() => {
-//   console.log("🔧 Extension installed");
-//   fetchBlockedSites();
-// });
+  const nextIsWorkSession = !pomodoroState.isWorkSession;
+  const nextLength = nextIsWorkSession
+    ? pomodoroState.workDuration || 1500
+    : pomodoroState.breakDuration || 300;
 
-// chrome.runtime.onStartup.addListener(() => {
-//   console.log("🔁 Chrome restarted - refetching blocklist");
-//   fetchBlockedSites();
-// });
+  const nextState = {
+    ...pomodoroState,
+    isWorkSession: nextIsWorkSession,
+    isRunning: false,
+    endTime: null,
+    remainingSeconds: nextLength
+  };
+
+  await chrome.storage.local.set({ pomodoroState: nextState });
+  await disableBlocking();
+});
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message === "refreshBlocklist") {
-    console.log("🔄 Popup requested to re-fetch blocklist");
-    fetchBlockedSites();
-  } else if (message === "disableBlocklist") {
-    console.log("🛑 Popup requested to disable blocking");
-    disableBlocking();
-  }
+  const handleMessage = async () => {
+    if (message === "refreshBlocklist") {
+      await fetchBlockedSites();
+    } else if (message === "disableBlocklist") {
+      await disableBlocking();
+    } else if (message?.type === "scheduleSessionEnd") {
+      await scheduleSessionEnd(message.endTime);
+    } else if (message?.type === "cancelSessionEnd") {
+      await chrome.alarms.clear(SESSION_ALARM);
+    }
+  };
+
+  handleMessage()
+    .then(() => sendResponse({ ok: true }))
+    .catch((error) => {
+      console.error("FocusShield background error:", error);
+      sendResponse({ ok: false, error: error.message });
+    });
+
+  return true;
 });
