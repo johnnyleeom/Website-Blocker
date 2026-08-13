@@ -42,7 +42,7 @@ FocusShield is currently distributed as an unpacked Chrome extension.
 
 ### 1. Download FocusShield
 
-Download the FocusShield beta ZIP and unzip it on your computer.
+Go to the [FocusShield Releases](https://github.com/johnnyleeom/Website-Blocker/releases) page and download `focusshield-v1.1.0.zip` from the release assets. Unzip the downloaded file on your computer.
 
 ### 2. Open Chrome Extensions
 
@@ -58,7 +58,7 @@ Turn on **Developer mode** using the toggle in the top-right corner of the Exten
 
 ### 4. Load FocusShield
 
-Click **Load unpacked** and select the unzipped FocusShield `dist` folder.
+Click **Load unpacked** and select the **unzipped FocusShield folder**. You do not need to select a separate `dist` folder.
 
 ### 5. Pin the Extension
 
@@ -94,6 +94,10 @@ FocusShield is actively being tested. If you encounter a bug or unexpected behav
 - What happened
 - What you expected to happen
 - Your Chrome version, if relevant
+
+## Download
+
+The latest beta ZIP can be found under **Assets** on the [FocusShield Releases](https://github.com/johnnyleeom/Website-Blocker/releases) page.
 
 ## Status
 
