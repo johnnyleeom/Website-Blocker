@@ -4,16 +4,13 @@ import PomodoroTimer from "./PomodoroTimer";
 export default function Dashboard() {
   return (
     <main className="dashboard-shell">
-      <header className="brand-header">
-        <img className="brand-logo" src="/specLogo.png" alt="FocusShield logo" />
-        <div>
-          <h1>FocusShield</h1>
-          <p>Protect your focus. Finish what matters.</p>
-        </div>
+      <header className="app-header">
+        <h1>FocusShield</h1>
+        <p>Less distraction. More focus.</p>
       </header>
-
-      <PomodoroTimer />
       <BlockedSites />
+      <div className="divider"><span>or use a timer</span></div>
+      <PomodoroTimer />
     </main>
   );
 }
