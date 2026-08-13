@@ -1,218 +1,82 @@
-import React, { useEffect, useState } from "react";
-import { db, auth } from './firebase';
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  arrayUnion
-} from 'firebase/firestore';
+import { useEffect, useState } from "react";
+import { db, auth } from "./firebase";
+import { doc, getDoc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
 
 export default function BlockedSites() {
-    const [site, setSite] = useState('');
-    const [sites, setSites] = useState([]);
-    const [isOn, setMode] = useState(false);
+  const [site, setSite] = useState("");
+  const [sites, setSites] = useState([]);
+  const [manualBlocking, setManualBlocking] = useState(false);
+  const user = auth.currentUser;
 
-    const user = auth.currentUser;
+  useEffect(() => {
+    if (!user) return;
 
-    const handleOnClick = () => {
-        if (!isOn) {
-            setMode(true);
-            chrome.runtime.sendMessage("refreshBlocklist");
-        } else {
-            setMode(false);
-            chrome.runtime.sendMessage("disableBlocklist");
-        }
-    }
-
-
-
-    useEffect(() => {
-        if (!user) {
-            return;
-        }
-
-        const fetchSites = async () => {
-            const docRef = doc(db, 'blockedSites', user.uid);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setSites(docSnap.data().sites || []);
-            }
-        };
-
-        const checkBlockingState = async () => {
-            try {
-                // Check if there are any active blocking rules
-                const rules = await chrome.declarativeNetRequest.getDynamicRules();
-                const hasActiveRules = rules.length > 0;
-                setMode(hasActiveRules);
-            } catch (error) {
-                console.error('Error checking blocking state:', error);
-            }
-        };
-
-        fetchSites();
-        checkBlockingState();
-    }, [user]);
-
-    const handleAddSite = async () => {
-        if (!site.trim() || !user) {
-            return;
-        }
-
-        const docRef = doc(db, 'blockedSites', user.uid);
-        await setDoc(
-            docRef,
-            { sites: arrayUnion(site.trim()) },
-            { merge: true}
-        );
-
-        setSites((prev) => [...prev, site.trim()]);
-        setSite('');
-        if (isOn) {
-            chrome.runtime.sendMessage("refreshBlocklist");
-        }
-
+    const load = async () => {
+      const docSnap = await getDoc(doc(db, "blockedSites", user.uid));
+      if (docSnap.exists()) setSites(docSnap.data().sites || []);
+      const stored = await chrome.storage.local.get("manualBlocking");
+      setManualBlocking(Boolean(stored.manualBlocking));
     };
 
-    const handleDeleteSite = async (siteToDelete) => {
-        if (!user) {
-            return;
-        }
+    load();
+  }, [user]);
 
-        const docRef = doc(db,  'blockedSites', user.uid);
-        const docSnap = await getDoc(docRef);
+  const toggleManualBlocking = () => {
+    const next = !manualBlocking;
+    setManualBlocking(next);
+    chrome.runtime.sendMessage({ type: "setManualBlocking", enabled: next });
+  };
 
-        if (docSnap.exists()) {
-            const currentSite = docSnap.data().sites || [];
-            const updatedSites = currentSite.filter(s => s !== siteToDelete);
+  const handleAddSite = async () => {
+    const trimmedSite = site.trim();
+    if (!trimmedSite || !user) return;
 
-            await updateDoc(docRef, { sites: updatedSites });
-            setSites(updatedSites);
-            if (isOn) {
-            chrome.runtime.sendMessage("refreshBlocklist");
-        }
-        }
+    const docRef = doc(db, "blockedSites", user.uid);
+    await setDoc(docRef, { sites: arrayUnion(trimmedSite) }, { merge: true });
+    setSites((previous) => previous.includes(trimmedSite) ? previous : [...previous, trimmedSite]);
+    setSite("");
+    chrome.runtime.sendMessage("refreshBlocklist");
+  };
 
+  const handleDeleteSite = async (siteToDelete) => {
+    if (!user) return;
+    const updatedSites = sites.filter((savedSite) => savedSite !== siteToDelete);
+    await updateDoc(doc(db, "blockedSites", user.uid), { sites: updatedSites });
+    setSites(updatedSites);
+    chrome.runtime.sendMessage("refreshBlocklist");
+  };
 
-    };
+  return (
+    <section className="panel sites-panel">
+      <h2>Website Blocker</h2>
+      <p className="helper-text">Block your list anytime, with or without the timer.</p>
 
-    return (
-        <div style={{
-            width: '400px',
-            padding: '20px',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '8px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            margin: '10px 0',
-            display: 'flex',
-            flexDirection: 'column',
-            maxHeight: '400px'
-        }}>
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                marginBottom: '15px'
-            }}>
-                <div 
-                    onClick={handleOnClick}
-                    style={{
-                        width: '40px',
-                        height: '24px',
-                        backgroundColor: isOn ? '#34C759' : '#E5E5EA',
-                        borderRadius: '12px',
-                        position: 'relative',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '2px'
-                    }}
-                >
-                    <div style={{
-                        width: '20px',
-                        height: '20px',
-                        backgroundColor: 'white',
-                        borderRadius: '50%',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        transform: isOn ? 'translateX(16px)' : 'translateX(0px)',
-                        transition: 'transform 0.2s ease'
-                    }} />
-                </div>
-                <h3 style={{ margin: 0 }}>Blocked Websites</h3>
-            </div>
-            
-            <div style={{
-                display: 'flex',
-                gap: '10px',
-                marginBottom: '15px'
-            }}>
-                <input 
-                    type="text"
-                    placeholder="https://example.com" 
-                    value={site}
-                    onChange={(e) => setSite(e.target.value)}
-                    style={{
-                        flex: 1,
-                        padding: '8px',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        fontSize: '14px'
-                    }}
-                />
-                <button 
-                    onClick={handleAddSite}
-                    style={{
-                        backgroundColor: '#2196F3',
-                        color: 'white',
-                        border: 'none',
-                        padding: '8px 16px',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Add
-                </button>
-            </div>
+      <button className={`block-toggle ${manualBlocking ? "on" : ""}`} onClick={toggleManualBlocking}>
+        <span className="toggle-track"><span className="toggle-knob" /></span>
+        {manualBlocking ? "Blocking is on" : "Blocking is off"}
+      </button>
 
-            <ul style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                flex: 1,
-                overflowY: 'auto',
-                minHeight: 0
-            }}>
-                {sites.map((s, i) => (
-                    <li key={i} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '8px',
-                        borderBottom: '1px solid #eee',
-                        backgroundColor: 'white',
-                        marginBottom: '5px',
-                        borderRadius: '4px'
-                    }}>
-                        <button 
-                            onClick={() => handleDeleteSite(s)}
-                            style={{
-                                backgroundColor: '#ff5722',
-                                color: 'white',
-                                border: 'none',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '12px'
-                            }}
-                        >
-                            Remove
-                        </button>
-                        <span style={{ flex: 1, wordBreak: 'break-all' }}>{s}</span>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
+      <div className="site-input-row">
+        <input
+          type="text"
+          placeholder="youtube.com"
+          value={site}
+          onChange={(event) => setSite(event.target.value)}
+          onKeyDown={(event) => event.key === "Enter" && handleAddSite()}
+        />
+        <button onClick={handleAddSite}>Add</button>
+      </div>
+
+      <div className="site-list">
+        {sites.length === 0 ? (
+          <p className="empty-state">No websites added yet.</p>
+        ) : sites.map((savedSite) => (
+          <div className="site-row" key={savedSite}>
+            <span>{savedSite}</span>
+            <button onClick={() => handleDeleteSite(savedSite)} aria-label={`Remove ${savedSite}`}>Remove</button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }

@@ -1,243 +1,109 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+
+const WORK_DURATION = 25 * 60;
+const BREAK_DURATION = 5 * 60;
 
 function PomodoroTimer() {
-  const [workTimer, setWorkTimer] = useState(1500); // 25 min
-  const [breakTimer, setBreakTimer] = useState(300); // 5 min
-
-  // Persistent state
+  const [isLoaded, setIsLoaded] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isWorkSession, setIsWorkSession] = useState(true);
-  const [lastStart, setLastStart] = useState(null); // timestamp when timer was (re)started
-  const [sessionLength, setSessionLength] = useState(workTimer); // in seconds
+  const [remainingSeconds, setRemainingSeconds] = useState(WORK_DURATION);
+  const [endTime, setEndTime] = useState(null);
+  const currentDuration = isWorkSession ? WORK_DURATION : BREAK_DURATION;
 
-  // Derived state
-  const [timeLeft, setTimeLeft] = useState(workTimer);
-
-  // Helper: Save state to chrome.storage.local
-  const saveState = (state) => {
-    chrome.storage.local.set({
-      pomodoroState: {
-        ...state,
-        lastStart: state.lastStart || null,
-      }
-    });
-  };
-
-  // Helper: Load state from chrome.storage.local
-  const loadState = () => {
-    chrome.storage.local.get(["pomodoroState"], (result) => {
-      const saved = result.pomodoroState;
-      if (saved) {
-        setIsWorkSession(saved.isWorkSession);
-        setIsRunning(saved.isRunning);
-        setLastStart(saved.lastStart);
-        setSessionLength(saved.sessionLength);
-      } else {
-        // If no saved state, initialize
-        setIsWorkSession(true);
-        setIsRunning(false);
-        setLastStart(null);
-        setSessionLength(workTimer);
-      }
-    });
-  };
-
-  // On mount, load state
   useEffect(() => {
-    loadState();
-    // eslint-disable-next-line
+    chrome.storage.local.get("pomodoroState", ({ pomodoroState }) => {
+      if (pomodoroState) {
+        const running = Boolean(pomodoroState.isRunning && pomodoroState.endTime);
+        const remaining = running
+          ? Math.max(0, Math.ceil((pomodoroState.endTime - Date.now()) / 1000))
+          : pomodoroState.remainingSeconds;
+        setIsRunning(running && remaining > 0);
+        setIsWorkSession(pomodoroState.isWorkSession ?? true);
+        setRemainingSeconds(remaining ?? WORK_DURATION);
+        setEndTime(running && remaining > 0 ? pomodoroState.endTime : null);
+      }
+      setIsLoaded(true);
+    });
   }, []);
 
-  // Save state on any change to persistent state
   useEffect(() => {
-    saveState({
-      isWorkSession,
-      isRunning,
-      lastStart,
-      sessionLength
-    });
-    // eslint-disable-next-line
-  }, [isWorkSession, isRunning, lastStart, sessionLength]);
-
-  // When persistent state changes, recalculate timeLeft
-  useEffect(() => {
-    if (isRunning && lastStart) {
-      const now = Date.now();
-      const elapsed = Math.floor((now - lastStart) / 1000);
-      setTimeLeft(Math.max(0, sessionLength - elapsed));
-    } else {
-      setTimeLeft(sessionLength);
-    }
-  }, [isRunning, lastStart, sessionLength]);
-
-  // When workTimer/breakTimer changes, update sessionLength if not running
-  useEffect(() => {
-    if (!isRunning) {
-      setSessionLength(isWorkSession ? workTimer : breakTimer);
-    }
-    // eslint-disable-next-line
-  }, [workTimer, breakTimer, isWorkSession]);
-
-  // Timer interval
-  useEffect(() => {
-    if (!isRunning) return;
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const elapsed = Math.floor((now - lastStart) / 1000);
-      const newTimeLeft = Math.max(0, sessionLength - elapsed);
-      setTimeLeft(newTimeLeft);
-      if (newTimeLeft <= 0) {
-        clearInterval(interval);
-        // Auto-switch session
-        if (isWorkSession) {
-          setIsWorkSession(false);
-          chrome.runtime.sendMessage("disableBlocklist");
-          setSessionLength(breakTimer);
-        } else {
-          setIsWorkSession(true);
-          chrome.runtime.sendMessage("refreshBlocklist");
-          setSessionLength(workTimer);
-        }
-        setIsRunning(false);
-        setLastStart(null);
+    if (!isLoaded) return;
+    chrome.storage.local.set({
+      pomodoroState: {
+        isRunning, isWorkSession, remainingSeconds, endTime,
+        workDuration: WORK_DURATION, breakDuration: BREAK_DURATION
       }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isRunning, lastStart, sessionLength, isWorkSession, workTimer, breakTimer]);
+    });
+  }, [isLoaded, isRunning, isWorkSession, remainingSeconds, endTime]);
 
-  // Start/pause button
-  const handleStart = () => {
+  useEffect(() => {
+    if (!isRunning || !endTime) return;
+    const tick = () => {
+      const next = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+      setRemainingSeconds(next);
+      if (next === 0) {
+        const nextIsWork = !isWorkSession;
+        setIsRunning(false);
+        setEndTime(null);
+        setIsWorkSession(nextIsWork);
+        setRemainingSeconds(nextIsWork ? WORK_DURATION : BREAK_DURATION);
+        chrome.runtime.sendMessage({ type: "setTimerBlocking", enabled: false });
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 250);
+    return () => clearInterval(interval);
+  }, [isRunning, endTime, isWorkSession]);
+
+  const handleStartPause = () => {
     if (!isRunning) {
+      const nextEndTime = Date.now() + remainingSeconds * 1000;
       setIsRunning(true);
-      setLastStart(Date.now());
-    } else {
-      // Pause: recalc timeLeft and store as sessionLength
-      const now = Date.now();
-      const elapsed = Math.floor((now - lastStart) / 1000);
-      const newTimeLeft = Math.max(0, sessionLength - elapsed);
-      setSessionLength(newTimeLeft);
-      setIsRunning(false);
-      setLastStart(null);
+      setEndTime(nextEndTime);
+      chrome.runtime.sendMessage({ type: "setTimerBlocking", enabled: isWorkSession });
+      chrome.runtime.sendMessage({ type: "scheduleSessionEnd", endTime: nextEndTime });
+      return;
     }
+
+    const nextRemaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+    setRemainingSeconds(nextRemaining);
+    setIsRunning(false);
+    setEndTime(null);
+    chrome.runtime.sendMessage({ type: "setTimerBlocking", enabled: false });
+    chrome.runtime.sendMessage({ type: "cancelSessionEnd" });
   };
 
-  // Reset button (optional)
+  const handleReset = () => {
+    setIsRunning(false);
+    setEndTime(null);
+    setRemainingSeconds(currentDuration);
+    chrome.runtime.sendMessage({ type: "setTimerBlocking", enabled: false });
+    chrome.runtime.sendMessage({ type: "cancelSessionEnd" });
+  };
+
+  const minutes = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
+  const seconds = String(remainingSeconds % 60).padStart(2, "0");
 
   return (
-    <div style={{
-      width: '400px',
-      padding: '16px',
-      backgroundColor: '#f5f5f5',
-      borderRadius: '8px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      margin: '10px 0',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: '16px'
-    }}>
-      <h3 style={{
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-        fontSize: '18px',
-        fontWeight: '600',
-        color: '#333',
-        margin: '0'
-      }}>
-        Pomodoro Timer
-      </h3>
-
-      {/* Session Indicator */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        backgroundColor: '#E5E5EA',
-        borderRadius: '8px',
-        padding: '4px'
-      }}>
-        <div style={{
-          padding: '8px 16px',
-          borderRadius: '6px',
-          backgroundColor: isWorkSession ? '#007AFF' : 'transparent',
-          color: isWorkSession ? 'white' : '#666',
-          fontSize: '14px',
-          fontWeight: '500'
-        }}>
-          Work
-        </div>
-        <div style={{
-          padding: '8px 16px',
-          borderRadius: '6px',
-          backgroundColor: !isWorkSession ? '#007AFF' : 'transparent',
-          color: !isWorkSession ? 'white' : '#666',
-          fontSize: '14px',
-          fontWeight: '500'
-        }}>
-          Break
-        </div>
+    <section className="panel timer-panel">
+      <h2>Focus Timer</h2>
+      <div className="timer-tabs">
+        <span className={isWorkSession ? "selected" : ""}>Focus</span>
+        <span className={!isWorkSession ? "selected" : ""}>Break</span>
       </div>
-
-      {/* Progress Bar Timer */}
-      <div style={{
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '12px'
-      }}>
-        {/* Time Display */}
-        <div style={{
-          fontSize: '32px',
-          fontWeight: '700',
-          color: '#333',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-          textAlign: 'center'
-        }}>
-          {String(Math.floor(timeLeft / 60)).padStart(2, "0")}:{String(timeLeft % 60).padStart(2, "0")}
-        </div>
-        {/* Progress Bar */}
-        <div style={{
-          width: '100%',
-          height: '8px',
-          backgroundColor: '#E5E5EA',
-          borderRadius: '4px',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            height: '100%',
-            backgroundColor: isWorkSession ? '#FF3B30' : '#34C759',
-            borderRadius: '4px',
-            width: `${100 * (1 - timeLeft / sessionLength)}%`,
-            transition: 'width 1s linear'
-          }} />
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div style={{
-        display: 'flex',
-        gap: '12px',
-        alignItems: 'center'
-      }}>
-        <button
-          onClick={handleStart}
-          style={{
-            padding: '10px 20px',
-            border: 'none',
-            borderRadius: '8px',
-            backgroundColor: isRunning ? '#FF3B30' : '#34C759',
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            minWidth: '70px'
-          }}
-        >
-          {isRunning ? 'Pause' : 'Start'}
+      <div className="timer-display">{minutes}:{seconds}</div>
+      <p className="helper-text timer-help">
+        {isWorkSession ? "Your websites are blocked while the focus timer runs." : "Break time. Websites are available."}
+      </p>
+      <div className="timer-actions">
+        <button className="main-button" onClick={handleStartPause}>
+          {isRunning ? "Pause" : remainingSeconds < currentDuration ? "Resume" : "Start"}
         </button>
+        <button className="plain-button" onClick={handleReset}>Reset</button>
       </div>
-    </div>
+    </section>
   );
 }
-export default PomodoroTimer;
 
+export default PomodoroTimer;
